@@ -2,6 +2,13 @@ import numpy as np
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 import random
+# Fix matplotlib import by installing/upgrading matplotlib
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    print("Please install/upgrade matplotlib using: pip install --upgrade matplotlib")
+    raise
+from sklearn.metrics import mean_squared_error, r2_score
 
 class GameOfLifePredictor:
     def __init__(self):
@@ -98,11 +105,24 @@ class GameOfLifePredictor:
         features_poly = self.poly.transform(features)
         prediction = self.model.predict(features_poly)[0]
         return max(1, int(round(prediction)))
+    
+    def plot_predictions(self, y_true, y_pred, title):
+        plt.figure(figsize=(10, 6))
+        # Convert single values to arrays if needed
+        y_true = np.atleast_1d(y_true)
+        y_pred = np.atleast_1d(y_pred)
+        
+        plt.scatter(y_true, y_pred, alpha=0.5)
+        plt.plot([min(y_true), max(y_true)], [min(y_true), max(y_true)], 'r--')
+        plt.xlabel('True Generations')
+        plt.ylabel('Predicted Generations')
+        plt.title(title)
+        plt.show()
 
 if __name__ == "__main__":
     predictor = GameOfLifePredictor()
     print("Training the model...")
-    predictor.train(num_samples=10000, board_size=20)
+    predictor.train(num_samples=1000, board_size=20)
     
     # Test the predictor
     test_board = predictor.create_random_board(20)
@@ -122,3 +142,11 @@ if __name__ == "__main__":
 
     predicted_generations = predictor.predict_generations(custom_pattern)
     print(f"This pattern will run for approximately {predicted_generations} generations")
+
+    # Generate predictions for plotting
+    X_test = predictor.extract_features(test_board)
+    X_test_poly = predictor.poly.transform(X_test)
+    test_pred = predictor.model.predict(X_test_poly)
+    
+    # Plot predictions
+    predictor.plot_predictions(actual, test_pred, "Game of Life Predictions vs Actual")
